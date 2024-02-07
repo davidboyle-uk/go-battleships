@@ -1,14 +1,13 @@
 package tcp
 
 import (
-	"context"
 	"fmt"
 	"net"
 	"os"
 	"os/signal"
 	"sync"
 
-	"go-battleships/logger"
+	"github.com/rockwell-uk/go-logger/logger"
 )
 
 type sServer struct {
@@ -22,9 +21,10 @@ type operation struct {
 }
 
 var (
-	s    sServer
-	ctrl = make(chan struct{}, 1)
-	ops  = make(chan operation)
+	connMap = &sync.Map{}
+	s       sServer
+	ctrl    = make(chan struct{}, 1)
+	ops     = make(chan operation)
 )
 
 func init() {
@@ -57,12 +57,15 @@ func wait() {
 	}
 }
 
-func Start(host, port string, requestHandler func(ct context.Context, connId int, c net.Conn, connMap *sync.Map)) {
+func Start(host, port string, requestHandler func(connId int, c net.Conn, connMap *sync.Map)) {
 	// Start the tcp server
 	logger.Log(
-		logger.LVL_INFO,
+		logger.LVL_APP,
 		fmt.Sprintf("starting on port %s", port),
 	)
+
+	// Store connected clients
+	var connId int
 
 	l, err := net.Listen(
 		"tcp",
@@ -77,18 +80,12 @@ func Start(host, port string, requestHandler func(ct context.Context, connId int
 	}
 
 	logger.Log(
-		logger.LVL_INFO,
+		logger.LVL_APP,
 		"started server",
 	)
 	s = sServer{
 		listener: l,
 	}
-
-	var connId int
-	var connMap = &sync.Map{}
-
-	// Get the context and a function to cancel it
-	ctx, cancel := context.WithCancel(context.Background())
 
 	go func() {
 		// Client loop
@@ -97,11 +94,6 @@ func Start(host, port string, requestHandler func(ct context.Context, connId int
 			if err != nil {
 				select {
 				case <-ctrl:
-					cancel()
-					logger.Log(
-						logger.LVL_INFO,
-						err.Error(),
-					)
 					return
 				default:
 					logger.Log(
@@ -115,19 +107,38 @@ func Start(host, port string, requestHandler func(ct context.Context, connId int
 			connId++
 			connMap.Store(connId, conn)
 			add(1)
-			go func(ct context.Context) {
+			go func() {
 				defer done()
-				requestHandler(ct, connId, conn, connMap)
-			}(ctx)
+				requestHandler(connId, conn, connMap)
+			}()
 		}
 	}()
 }
 
 func Stop() {
 	logger.Log(
-		logger.LVL_INFO,
+		logger.LVL_APP,
 		"shutting down server",
 	)
+
+	// // close connections
+	connMap.Range(func(key, value interface{}) bool {
+		if conn, ok := value.(net.Conn); ok {
+			payload := "quit"
+			if _, err := conn.Write([]byte(fmt.Sprintln(payload))); err != nil {
+				logger.Log(
+					logger.LVL_ERROR,
+					fmt.Sprintf("error writing to client %s", err.Error()),
+				)
+			}
+			logger.Log(
+				logger.LVL_INTERNAL,
+				fmt.Sprintf("sent %s", payload),
+			)
+			conn.Close()
+		}
+		return true
+	})
 
 	// Signal close
 	ctrl <- struct{}{}
@@ -135,15 +146,12 @@ func Stop() {
 	// Close listener
 	s.listener.Close()
 
-	// HACK
-	os.Exit(0)
-
 	// Wait for all connections to finish
 	wait()
 
 	// Exit message (Client loop has closed)
 	logger.Log(
-		logger.LVL_INFO,
+		logger.LVL_APP,
 		"server exited properly",
 	)
 }
@@ -158,8 +166,8 @@ func GracefulExit() {
 
 	// Log
 	logger.Log(
-		logger.LVL_INFO,
-		"recieved sigterm",
+		logger.LVL_APP,
+		"received sigterm",
 	)
 
 	// Stop TCP service

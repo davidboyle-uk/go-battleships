@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"strings"
 
-	"go-battleships/logger"
+	"github.com/rockwell-uk/go-logger/logger"
 )
 
 const (
@@ -13,7 +13,7 @@ const (
 	PROTO_DELIM = "|"
 )
 
-// Parse inbound packet
+// Parse inbound packet.
 func ParseMessage(m string) (Proto, error) {
 	var action, body string
 	var player int
@@ -50,7 +50,7 @@ func ParseMessage(m string) (Proto, error) {
 	}
 
 	logger.Log(
-		logger.LVL_DEBUG,
+		logger.LVL_INTERNAL,
 		fmt.Sprintf("parsed: %v", parsed),
 	)
 

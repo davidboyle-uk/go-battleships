@@ -3,7 +3,7 @@ package core
 import (
 	"testing"
 
-	"go-battleships/core/types"
+	"github.com/dbx123/go-battleships/core/types"
 )
 
 func TestCheckWinner(t *testing.T) {
@@ -24,7 +24,7 @@ func TestCheckWinner(t *testing.T) {
 		},
 	} {
 		t.Run(name, func(t *testing.T) {
-			GameDecoder(tt.p)
+			DecodeGame(tt.p)
 			winner, loser := CheckWinner()
 
 			if tt.winner != winner || tt.loser != loser {
@@ -45,11 +45,11 @@ func TestCheckCollisions(t *testing.T) {
 		},
 	} {
 		t.Run(name, func(t *testing.T) {
-			GameDecoder(tt.p)
+			DecodeGame(tt.p)
 
 			b := []types.Ship{}
 			for k, a := range g.SecondPlayer.Sea.Ships {
-				actual := CheckCollisions(&a, b)
+				actual := CheckCollisions(&g.SecondPlayer.Sea.Ships[k], b)
 
 				if tt.results[k] != actual {
 					t.Fatalf("Expected `%v` Got `%v` (%v) adding [%v] to [%v]", tt.results[k], actual, k, a, b)

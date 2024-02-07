@@ -1,8 +1,7 @@
 package types
 
 import (
-	"encoding/json"
-	"go-battleships/util"
+	"github.com/dbx123/go-battleships/util"
 )
 
 type Game struct {
@@ -93,9 +92,4 @@ func (g *Game) PrettyPrintGame(currentPlayer int) string {
 	gs += g.LastShotInToString()
 
 	return gs
-}
-
-func (g *Game) DebugGame() string {
-	jg, _ := json.MarshalIndent(g, "", "    ")
-	return string(jg)
 }

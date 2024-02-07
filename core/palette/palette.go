@@ -1,4 +1,4 @@
-package pallete
+package palette
 
 import "github.com/fatih/color"
 

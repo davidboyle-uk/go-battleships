@@ -2,8 +2,9 @@ package types
 
 import (
 	"fmt"
-	"go-battleships/util"
 	"strconv"
+
+	"github.com/dbx123/go-battleships/util"
 )
 
 type Coordinates struct {

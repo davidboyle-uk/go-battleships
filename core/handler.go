@@ -2,17 +2,17 @@ package core
 
 import (
 	"bufio"
-	"context"
 	"fmt"
 	"net"
 	"os"
 	"sync"
 
-	"go-battleships/logger"
-	"go-battleships/tcp"
+	"github.com/dbx123/go-battleships/tcp"
+
+	"github.com/rockwell-uk/go-logger/logger"
 )
 
-func HandleRequest(ct context.Context, connId int, conn net.Conn, connMap *sync.Map) {
+func HandleRequest(connId int, conn net.Conn, connMap *sync.Map) {
 	defer func() {
 		conn.Close()
 		connMap.Delete(connId)
@@ -21,55 +21,34 @@ func HandleRequest(ct context.Context, connId int, conn net.Conn, connMap *sync.
 	reader := bufio.NewReader(conn)
 
 	for {
-		select {
-		case <-ct.Done():
-			sendToClients(connMap, tcp.Proto{
-				Action: QUIT,
-			})
-			os.Exit(1)
-		default:
-			// Read inbound payload
-			message, err := reader.ReadString('\n')
-			if err != nil {
-				if err.Error() != "EOF" {
-					logger.Log(
-						logger.LVL_ERROR,
-						fmt.Sprintf("error reading input %s", err.Error()),
-					)
-				}
-				return
-			}
+		// Read inbound payload
+		m, err := reader.ReadString('\n')
+		if err != nil {
+			return
+		}
 
-			// String message
-			m := string(message)
+		// Parse
+		p, err := tcp.ParseMessage(m)
+		if err != nil {
 			logger.Log(
-				logger.LVL_DEBUG,
-				fmt.Sprintf("recieved packet: %s", m),
+				logger.LVL_ERROR,
+				err.Error(),
 			)
+			return
+		}
 
-			// Parse
-			p, err := tcp.ParseMessage(m)
-			if err != nil {
-				logger.Log(
-					logger.LVL_ERROR,
-					err.Error(),
-				)
-				return
-			}
+		responses, err := ProcessRequest(p)
+		if err != nil {
+			logger.Log(
+				logger.LVL_ERROR,
+				err.Error(),
+			)
+			return
+		}
 
-			responses, err := ProcessRequest(p)
-			if err != nil {
-				logger.Log(
-					logger.LVL_ERROR,
-					err.Error(),
-				)
-				return
-			}
-
-			// Write the response(s)
-			for _, res := range responses {
-				sendToClients(connMap, res)
-			}
+		// Write the response(s)
+		for _, res := range responses {
+			sendToClients(connMap, res)
 		}
 	}
 }
@@ -85,11 +64,14 @@ func sendToClients(connMap *sync.Map, payload tcp.Proto) {
 					)
 				}
 				logger.Log(
-					logger.LVL_DEBUG,
+					logger.LVL_INTERNAL,
 					fmt.Sprintf("sent %s", payload),
 				)
 			}
 		}
 		return true
 	})
+	if payload.Action == QUIT {
+		os.Exit(0)
+	}
 }

@@ -3,8 +3,8 @@ package types
 import (
 	"strconv"
 
-	"go-battleships/core/pallete"
-	"go-battleships/util"
+	"github.com/dbx123/go-battleships/core/palette"
+	"github.com/dbx123/go-battleships/util"
 )
 
 const (
@@ -16,10 +16,10 @@ const (
 
 var (
 	GAME_GRID_BORDER = "|"
-	STR_SHIP_OK      = pallete.White("██")
-	STR_SHIP_HIT     = pallete.Red("██")
+	STR_SHIP_OK      = palette.White("██")
+	STR_SHIP_HIT     = palette.Red("██")
 	STR_SEA_OK       = "  "
-	STR_SEA_HIT      = pallete.Cyan("~~")
+	STR_SEA_HIT      = palette.Cyan("~~")
 	STR_STATUS_ERROR = "??"
 
 	PRINT_CALLERSEA_MODE   = 2
@@ -41,7 +41,7 @@ type Player struct {
 	Hits       []Coordinates `json:"hit"`
 }
 
-// SeaToString print Player Sea
+// SeaToString print Player Sea.
 //
 //	[p:*Player]	Player
 //	[return]	string
@@ -62,7 +62,6 @@ func (p *Player) SeaToString(h int) (ss string) {
 
 	// for each row
 	for r := 0; r < p.Sea.Dimension; r++ {
-
 		// start with legend
 		pad := "  "
 		if r >= 9 {
@@ -75,34 +74,25 @@ func (p *Player) SeaToString(h int) (ss string) {
 
 		// for each column
 		for c := 0; c < p.Sea.Dimension; c++ {
-
 			// if we are drawing caller's Sea
 			if h == PRINT_CALLERSEA_MODE {
-
 				// check ShipPosition in Sea
 				rp, si, ci := p.Sea.CheckShipPosition(&Coordinates{Abscissa: c + 1, Ordinate: r + 1})
 
 				// if there's a Sea in position
 				if rp {
-
 					// add correct status representation
 					ss += " " + StatusToString(p.Sea.Ships[si].Positions[ci].Status) + " " + GAME_GRID_BORDER
-
 				} else {
-
 					// check SufferedMoves in Sea
 					pp, pi := p.CheckSufferedMoves(&Coordinates{Abscissa: c + 1, Ordinate: r + 1})
 
 					// if opponent shot in the cell
 					if pp {
-
 						// add correct status representation
 						ss += " " + StatusToString(p.Suffered[pi].Status) + " " + GAME_GRID_BORDER
-
 					} else {
-
 						ss += " " + STR_SEA_OK + " " + GAME_GRID_BORDER
-
 					}
 				}
 			}
@@ -114,11 +104,9 @@ func (p *Player) SeaToString(h int) (ss string) {
 
 				// if opponent shot in the cell
 				if pp {
-
 					// add correct status representation
 					ss += " " + StatusToString(p.Suffered[pi].Status) + " " + GAME_GRID_BORDER
 				} else {
-
 					ss += " " + STR_SEA_OK + " " + GAME_GRID_BORDER
 				}
 			}
@@ -126,7 +114,7 @@ func (p *Player) SeaToString(h int) (ss string) {
 
 		// create separation line
 		ss += "\n" + "   " + GAME_GRID_BORDER
-		l := "" //legend text
+		l := "" // legend text
 		for c := 0; c < p.Sea.Dimension-1; c++ {
 			ss += "-----"
 			if lt, ok := legend[r]; ok {
@@ -134,13 +122,12 @@ func (p *Player) SeaToString(h int) (ss string) {
 			}
 		}
 		ss += "----" + GAME_GRID_BORDER + "   " + l + "\n"
-
 	}
 
 	return ss
 }
 
-// StatusToString print Status of Coordinates
+// StatusToString print Status of Coordinates.
 func StatusToString(s int) string {
 	// check Ship status in specific position
 	switch s {
@@ -158,7 +145,7 @@ func StatusToString(s int) string {
 	return STR_STATUS_ERROR
 }
 
-// CheckSufferedMoves check p coordinates in given Sea's Player
+// CheckSufferedMoves check p coordinates in given Sea's Player.
 //
 //	[p:*Coordinates]	Coordinate point pointer		[pp:*Player]		b Player pointer
 //	[return]	bool (collision), ship index, coordinate index
@@ -174,7 +161,23 @@ func (pp *Player) CheckSufferedMoves(p *Coordinates) (bool, int) {
 	return false, -1
 }
 
-// GunShot from p Player to t Player in p Coordinates
+// CheckSufferedMoves check p coordinates in given Sea's Player.
+//
+//	[p:*Coordinates]	Coordinate point pointer		[pp:*Player]		b Player pointer
+//	[return]	bool (collision), ship index, coordinate index
+func (pp *Player) CheckHitMoves(p *Coordinates) (bool, int) {
+	// for each suffered
+	for pi, pv := range pp.Hits {
+		// if coordinates == positions
+		if p.Abscissa == pv.Abscissa && p.Ordinate == pv.Ordinate {
+			// return true, positions index in Player Suffered Moves
+			return true, pi
+		}
+	}
+	return false, -1
+}
+
+// GunShot from p Player to t Player in p Coordinates.
 //
 //	[f:*Player]			from Player	pointer		//	[t:*Player]			to Player pointer
 //	[p:*Coordinates]	Coordinate point pointer
@@ -191,10 +194,13 @@ func (f *Player) GunShot(t *Player, p *Coordinates) {
 		// t player ship stricken
 		t.Sea.Ships[si].Positions[ci].Status = STATUS_SHIP_HIT
 		np = Coordinates{Abscissa: p.Abscissa, Ordinate: p.Ordinate, Status: STATUS_SHIP_HIT}
-		f.Hits = append(f.Hits, np)
+		if h, _ := f.CheckHitMoves(p); !h {
+			f.Hits = append(f.Hits, np)
+		}
 	} else {
 		np = Coordinates{Abscissa: p.Abscissa, Ordinate: p.Ordinate, Status: STATUS_SEA_HIT}
 	}
+
 	// add suffered move
 	t.Suffered = append(t.Suffered, np)
 }

@@ -4,17 +4,21 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"os"
 	"strconv"
 	"time"
 
-	"go-battleships/core/types"
-	"go-battleships/logger"
-	"go-battleships/tcp"
-	"go-battleships/util"
+	"github.com/dbx123/go-battleships/core/types"
+	"github.com/dbx123/go-battleships/tcp"
+	"github.com/dbx123/go-battleships/util"
+
+	"github.com/rockwell-uk/go-logger/logger"
 )
 
 func ProcessRequest(p tcp.Proto) ([]tcp.Proto, error) {
+	logger.Log(
+		logger.LVL_INTERNAL,
+		fmt.Sprintf("process request: %s", p),
+	)
 	// Run the operation
 	switch p.Action {
 	// Initial connection
@@ -28,9 +32,10 @@ func ProcessRequest(p tcp.Proto) ([]tcp.Proto, error) {
 		return SetPlayerName(p)
 	case GUNSHOT:
 		return DoGunShot(p)
+	case LEFT:
+		return DoLeft(p)
 	case QUIT:
-		os.Exit(1)
-		return Quit()
+		return DoQuit()
 	default:
 		logger.Log(
 			logger.LVL_ERROR,
@@ -40,10 +45,26 @@ func ProcessRequest(p tcp.Proto) ([]tcp.Proto, error) {
 	}
 }
 
-func Quit() ([]tcp.Proto, error) {
-	return []tcp.Proto{{
-		Action: QUIT,
-	}}, nil
+func DoLeft(p tcp.Proto) ([]tcp.Proto, error) {
+	return []tcp.Proto{
+		{
+			Action: LEFT,
+			Player: 0,
+		},
+		{
+			Action: QUIT,
+			Player: 0,
+		},
+	}, nil
+}
+
+func DoQuit() ([]tcp.Proto, error) {
+	return []tcp.Proto{
+		{
+			Action: QUIT,
+			Player: 0,
+		},
+	}, nil
 }
 
 func Hello() ([]tcp.Proto, error) {
@@ -93,7 +114,6 @@ func SetGameType(p tcp.Proto) ([]tcp.Proto, error) {
 }
 
 func Assigned(p tcp.Proto) ([]tcp.Proto, error) {
-
 	var player int
 	switch *g.GameType {
 	case types.ONE_PLAYER:
@@ -124,7 +144,7 @@ func SetPlayerName(p tcp.Proto) ([]tcp.Proto, error) {
 			{
 				Action: DRAW_GAME_SHOOT,
 				Player: 1,
-				Body:   getGame(1),
+				Body:   getGame(),
 			},
 		}, nil
 	case types.TWO_PLAYER:
@@ -144,12 +164,12 @@ func SetPlayerName(p tcp.Proto) ([]tcp.Proto, error) {
 				{
 					Action: DRAW_GAME_SHOOT,
 					Player: 1,
-					Body:   getGame(1),
+					Body:   getGame(),
 				},
 				{
 					Action: DRAW_GAME_AWAIT,
 					Player: 2,
-					Body:   getGame(2),
+					Body:   getGame(),
 				},
 			}, nil
 		}
@@ -162,33 +182,25 @@ func SleepRequest() {
 	time.Sleep(SIMULATION_THINKING_TIME * time.Millisecond)
 }
 
-// DoGunShot from p Player to t Player in p Coordinates
+// DoGunShot from p Player to t Player in p Coordinates.
 func DoGunShot(p tcp.Proto) ([]tcp.Proto, error) {
 	// decode received game
-	GameDecoder(p.Body)
+	DecodeGame(p.Body)
 
 	switch *g.GameType {
 	case types.ONE_PLAYER:
-
 		winner, _ := CheckWinner()
 		if winner == 2 {
 			return []tcp.Proto{
 				{
 					Action: DRAW_ENDSCREEN,
-					Player: 2,
+					Player: 0,
 					Body:   WINNER,
 				},
 			}, nil
 		}
 
-		// debug print of json
-		//fmt.Println(DebugGame(&g))
-
-		// debug pause
-		//util.ConsolePause(util.PAUSE_MEX)
-		Timeout()
-
-		// TODO: IMPLEMENT STRATEGY
+		// @TODO: IMPLEMENT STRATEGY / DONT FIRE ALREADY PLAYED SHOT? CURRENTLY A FEATURE :D
 		s := util.Random(0, len(g.SecondPlayer.Sea.Ships)-1)
 		k := util.Random(0, len(g.SecondPlayer.Sea.Ships[s].Positions)-1)
 		g.FirstPlayer.GunShot(&g.SecondPlayer, &g.SecondPlayer.Sea.Ships[s].Positions[k])
@@ -204,23 +216,16 @@ func DoGunShot(p tcp.Proto) ([]tcp.Proto, error) {
 			}, nil
 		}
 
-		// debug pause
-		//util.ConsolePause(util.PAUSE_MEX)
-		Timeout()
-
-		// print game
-		//fmt.Println(PrettyPrintGame(&g))
-
 		// send back to client
 		return []tcp.Proto{
 			{
 				Action: DRAW_GAME_SHOOT,
-				Player: 2,
-				Body:   getGame(2),
+				Player: 0,
+				Body:   getGame(),
 			},
 		}, nil
-	case types.TWO_PLAYER:
 
+	case types.TWO_PLAYER:
 		winner, loser := CheckWinner()
 		if winner > 0 {
 			return []tcp.Proto{
@@ -248,12 +253,12 @@ func DoGunShot(p tcp.Proto) ([]tcp.Proto, error) {
 			{
 				Action: DRAW_GAME_AWAIT,
 				Player: p.Player,
-				Body:   getGame(p.Player),
+				Body:   getGame(),
 			},
 			{
 				Action: DRAW_GAME_SHOOT,
 				Player: opponent,
-				Body:   getGame(opponent),
+				Body:   getGame(),
 			},
 		}, nil
 	}
@@ -261,7 +266,7 @@ func DoGunShot(p tcp.Proto) ([]tcp.Proto, error) {
 	return []tcp.Proto{}, nil
 }
 
-func getGame(p int) string {
+func getGame() string {
 	res, err := json.Marshal(g)
 	if err != nil {
 		panic(err)

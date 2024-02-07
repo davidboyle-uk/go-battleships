@@ -1,36 +1,37 @@
 package util
 
 import (
-	"bufio"
+	"crypto/rand"
 	"fmt"
-	"math/rand"
-	"net/http"
-	"os"
-	"time"
+	"math/big"
 )
 
 const (
-	ROW_NUMBER = 1024
-	COL_NUMBER = 1024
+	ROW_NUMBER int = 1024
+	COL_NUMBER int = 1024
 
-	BLANK_SPACE = " "
-	PAUSE_MEX   = ">>> press ENTER to go on..."
+	BLANK_SPACE string = " "
+	PAUSE_MEX   string = ">>> press ENTER to go on..."
 )
 
 func Random(min, max int) int {
-	max = max + 1
-	rand.Seed(time.Now().Unix())
-	return rand.Intn(max-min) + min
+	if min == max {
+		return min
+	}
+	// calculate the max we will be using
+	bg := big.NewInt(int64(max - min))
+	n, _ := rand.Int(rand.Reader, bg)
+	return int(n.Int64()) + min
 }
 
-// a = 1
+// a = 1.
 func RuneToInt(letter rune) int {
 	char := int(letter)
 	char -= 65 + 31
 	return char
 }
 
-// 1 = a
+// 1 = a.
 func intToRune(number int) rune {
 	char := number + 65 + 32
 	return rune(char)
@@ -49,12 +50,6 @@ func Search(a int, b []int) bool {
 	return false
 }
 
-func ConsolePause(m string) {
-	reader := bufio.NewReader(os.Stdin)
-	fmt.Println(m)
-	reader.ReadString('\n')
-}
-
 func CleanScreen() {
 	r, c := 0, 0
 	for r < ROW_NUMBER {
@@ -66,9 +61,4 @@ func CleanScreen() {
 		r++
 	}
 	fmt.Print("\033[0;0H")
-}
-
-func Exit(w http.ResponseWriter, r *http.Request) {
-	CleanScreen()
-	os.Exit(1)
 }
