@@ -13,15 +13,16 @@ import (
 	"strings"
 	"sync"
 
+	bb_types "github.com/dbx123/battleships-board/types"
 	"github.com/dbx123/go-battleships/core"
-	"github.com/dbx123/go-battleships/core/types"
 	"github.com/dbx123/go-battleships/tcp"
+	"github.com/dbx123/go-battleships/types"
 	"github.com/dbx123/go-battleships/util"
 )
 
 var (
 	conn          net.Conn
-	g             *types.Game
+	g             types.Game
 	currentPlayer int
 )
 
@@ -89,18 +90,9 @@ func Announce() {
 }
 
 // DoGunShot make a request to gun shot and receive response.
-func DoGunShot(c *types.Coordinates) {
-	// gun shot
-	myPlayer(g).GunShot(otherPlayer(g), c)
-
-	// prepare JSON
-	js, err := json.Marshal(g)
-	if err != nil {
-		panic(err)
-	}
-
+func DoGunShot(c bb_types.Coord) {
 	// send to socket
-	reply(core.GUNSHOT, string(js))
+	reply(core.GUNSHOT, c.String())
 }
 
 func processRequests(c1 chan tcp.Proto) {
@@ -160,7 +152,8 @@ func getPlayerName() string {
 	}
 }
 
-func getCoordinates(g *types.Game) types.Coordinates {
+func getCoordinates(g types.Game) bb_types.Coord {
+	gridSize := g.Game.Players[0].Board.Dim
 	for {
 		move, e1 := readUserInput()
 		if len(move) < 1 {
@@ -172,22 +165,23 @@ func getCoordinates(g *types.Game) types.Coordinates {
 			continue
 		}
 
+		// careful
 		x := util.RuneToInt(rune(move[0]))
 		y, e2 := strconv.Atoi(move[1:])
-		c := types.Coordinates{Abscissa: x, Ordinate: y}
+		c := bb_types.Coord{X: x, Y: y - 1}
 
 		switch {
 		case alreadyFired(g, c):
 			fmt.Printf("You have already shot coord [%s], try again\n", move)
-		case !c.Validate(g.GridSize):
+		case c.IsOutOfBounds(gridSize):
 			fmt.Printf("Out of bounds or invalid %s\n", move)
-		case e1 == nil && e2 == nil && c.Validate(g.GridSize) && !alreadyFired(g, c):
+		case e1 == nil && e2 == nil:
 			return c
 		}
 	}
 }
 
-func awaitText(g *types.Game) {
+func awaitText(g types.Game) {
 	fmt.Printf("Wait for %s to fire...\n", opponentName(g))
 }
 
@@ -215,43 +209,45 @@ func leftText(opponent string) string {
 	return fmt.Sprintf("%s left the game", opponent)
 }
 
-func alreadyFired(g *types.Game, c types.Coordinates) bool {
-	pp, _ := core.CheckShotsFired(&c, myPlayer(g))
-	return pp
+func alreadyFired(g types.Game, c bb_types.Coord) bool {
+	if _, ok := myPlayer(g).Moves[c.String()]; ok {
+		return true
+	}
+	return false
 }
 
-func myPlayer(g *types.Game) *types.Player {
-	var p types.Player
+func myPlayer(g types.Game) *bb_types.Player {
+	var p *bb_types.Player
 	switch *g.GameType {
 	case types.ONE_PLAYER:
-		return &g.SecondPlayer
+		return g.Game.Players[1]
 	case types.TWO_PLAYER:
 		if currentPlayer == 1 {
-			return &g.FirstPlayer
+			return g.Game.Players[0]
 		}
-		return &g.SecondPlayer
+		return g.Game.Players[1]
 	}
-	return &p
+	return p
 }
 
-func otherPlayer(g *types.Game) *types.Player {
-	var p types.Player
+func otherPlayer(g types.Game) *bb_types.Player {
+	var p *bb_types.Player
 	switch *g.GameType {
 	case types.ONE_PLAYER:
-		return &g.FirstPlayer
+		return g.Game.Players[0]
 	case types.TWO_PLAYER:
 		if currentPlayer == 1 {
-			return &g.SecondPlayer
+			return g.Game.Players[1]
 		}
-		return &g.FirstPlayer
+		return g.Game.Players[0]
 	}
-	return &p
+	return p
 }
 
-func myName(g *types.Game) string {
+func myName(g types.Game) string {
 	return myPlayer(g).Name
 }
 
-func opponentName(g *types.Game) string {
+func opponentName(g types.Game) string {
 	return otherPlayer(g).Name
 }

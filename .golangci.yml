@@ -98,10 +98,10 @@ linters-settings:
     custom-order: true
     sections:
       - standard
-      - prefix(github.com/dbx123/go-battleships)
+      - prefix(go-battleships)
       - default
   goimports:
-    local-prefixes: github.com/dbx123/go-battleships
+    local-prefixes: go-battleships
 
 issues:
   exclude-rules:

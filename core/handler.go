@@ -26,6 +26,10 @@ func HandleRequest(connId int, conn net.Conn, connMap *sync.Map) {
 		if err != nil {
 			return
 		}
+		logger.Log(
+			logger.LVL_INTERNAL,
+			fmt.Sprintf("received %s", m),
+		)
 
 		// Parse
 		p, err := tcp.ParseMessage(m)

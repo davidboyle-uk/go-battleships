@@ -11,15 +11,15 @@ func Test_RuneToInt(t *testing.T) {
 	}{
 		"a": {
 			rune("a"[0]),
-			1,
+			0,
 		},
 		"b": {
 			rune("b"[0]),
-			2,
+			1,
 		},
 		"c": {
 			rune("c"[0]),
-			3,
+			2,
 		},
 	} {
 		t.Run(name, func(t *testing.T) {

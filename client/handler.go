@@ -42,7 +42,7 @@ func handleRequest(p tcp.Proto) tcp.Proto {
 		fmt.Println(g.PrettyPrintGame(currentPlayer))
 		fmt.Println(shootText())
 		c := getCoordinates(g)
-		DoGunShot(&c)
+		DoGunShot(c)
 
 	case core.DRAW_ENDSCREEN:
 		util.CleanScreen()

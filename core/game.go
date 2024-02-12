@@ -5,11 +5,13 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
-	"time"
+	"strings"
 
-	"github.com/dbx123/go-battleships/core/types"
+	"github.com/dbx123/battleships-board/pkg/ai"
+	"github.com/dbx123/battleships-board/pkg/game"
+	bb_types "github.com/dbx123/battleships-board/types"
 	"github.com/dbx123/go-battleships/tcp"
-	"github.com/dbx123/go-battleships/util"
+	"github.com/dbx123/go-battleships/types"
 
 	"github.com/rockwell-uk/go-logger/logger"
 )
@@ -138,19 +140,19 @@ func SetPlayerName(p tcp.Proto) ([]tcp.Proto, error) {
 	)
 	switch *g.GameType {
 	case types.ONE_PLAYER:
-		g.FirstPlayer.Name = "CPU"
-		g.SecondPlayer.Name = p.Body
+		g.Game.Players[0].Name = "CPU"
+		g.Game.Players[1].Name = p.Body
 		return []tcp.Proto{
 			{
 				Action: DRAW_GAME_SHOOT,
 				Player: 1,
-				Body:   getGame(),
+				Body:   getGame(1),
 			},
 		}, nil
 	case types.TWO_PLAYER:
 		switch p.Player {
 		case 1:
-			g.FirstPlayer.Name = p.Body
+			g.Game.Players[0].Name = p.Body
 			return []tcp.Proto{
 				{
 					Action: AWAIT_OPPONENT,
@@ -159,17 +161,17 @@ func SetPlayerName(p tcp.Proto) ([]tcp.Proto, error) {
 				},
 			}, nil
 		case 2:
-			g.SecondPlayer.Name = p.Body
+			g.Game.Players[1].Name = p.Body
 			return []tcp.Proto{
 				{
 					Action: DRAW_GAME_SHOOT,
 					Player: 1,
-					Body:   getGame(),
+					Body:   getGame(1),
 				},
 				{
 					Action: DRAW_GAME_AWAIT,
 					Player: 2,
-					Body:   getGame(),
+					Body:   getGame(2),
 				},
 			}, nil
 		}
@@ -178,14 +180,68 @@ func SetPlayerName(p tcp.Proto) ([]tcp.Proto, error) {
 	return []tcp.Proto{}, errors.New("already have 2 players")
 }
 
-func SleepRequest() {
-	time.Sleep(SIMULATION_THINKING_TIME * time.Millisecond)
+func CheckWinner() (int, int) {
+	if g.Game.Players[0].Hits == g.Game.Players[0].Board.ShipTot {
+		return 1, 2
+	}
+	if g.Game.Players[1].Hits == g.Game.Players[1].Board.ShipTot {
+		return 2, 1
+	}
+	return 0, 0
 }
 
-// DoGunShot from p Player to t Player in p Coordinates.
+func CombineMoves(a, b bb_types.Moves) bb_types.Moves {
+	new := make(bb_types.Moves)
+	for k, v := range a {
+		new[k] = v
+	}
+	for k, v := range b {
+		new[k] = v
+	}
+	return new
+}
+
+func CoordFromString(s string) (bb_types.Coord, error) {
+	bits := strings.Split(s, " ")
+	x, err := strconv.Atoi(bits[0])
+	if err != nil {
+		return bb_types.Coord{}, err
+	}
+	y, err := strconv.Atoi(bits[1])
+	if err != nil {
+		return bb_types.Coord{}, err
+	}
+
+	return bb_types.Coord{
+		X: x,
+		Y: y,
+	}, nil
+}
+
 func DoGunShot(p tcp.Proto) ([]tcp.Proto, error) {
-	// decode received game
-	DecodeGame(p.Body)
+	// get bearings
+	var myID int
+	var us, them *bb_types.Player
+	switch p.Player {
+	case 1:
+		myID = 0
+		us = g.Game.Players[0]
+		them = g.Game.Players[1]
+	case 2:
+		myID = 1
+		us = g.Game.Players[1]
+		them = g.Game.Players[0]
+	}
+
+	// decode coord
+	c, err := CoordFromString(p.Body)
+	if err != nil {
+		return []tcp.Proto{}, err
+	}
+
+	// gun shot
+	game.TakeShot(us, them, c)
+	g.LastMoves[myID] = c
 
 	switch *g.GameType {
 	case types.ONE_PLAYER:
@@ -200,10 +256,17 @@ func DoGunShot(p tcp.Proto) ([]tcp.Proto, error) {
 			}, nil
 		}
 
-		// @TODO: IMPLEMENT STRATEGY / DONT FIRE ALREADY PLAYED SHOT? CURRENTLY A FEATURE :D
-		s := util.Random(0, len(g.SecondPlayer.Sea.Ships)-1)
-		k := util.Random(0, len(g.SecondPlayer.Sea.Ships[s].Positions)-1)
-		g.FirstPlayer.GunShot(&g.SecondPlayer, &g.SecondPlayer.Sea.Ships[s].Positions[k])
+		move := ai.CalculateMove(bb_types.Board{
+			Dim:   g.Game.Players[1].Board.Dim,
+			Moves: g.Game.Players[0].Moves,
+		})
+		logger.Log(
+			logger.LVL_INTERNAL,
+			fmt.Sprintf("CPU shot %s", move),
+		)
+		// ai gun shot
+		game.TakeShot(g.Game.Players[0], g.Game.Players[1], move)
+		g.LastMoves[0] = move
 
 		winner, _ = CheckWinner()
 		if winner == 1 {
@@ -221,11 +284,19 @@ func DoGunShot(p tcp.Proto) ([]tcp.Proto, error) {
 			{
 				Action: DRAW_GAME_SHOOT,
 				Player: 0,
-				Body:   getGame(),
+				Body:   getGame(1),
 			},
 		}, nil
 
 	case types.TWO_PLAYER:
+		var opponent int
+		switch p.Player {
+		case 1:
+			opponent = 2
+		case 2:
+			opponent = 1
+		}
+
 		winner, loser := CheckWinner()
 		if winner > 0 {
 			return []tcp.Proto{
@@ -242,23 +313,16 @@ func DoGunShot(p tcp.Proto) ([]tcp.Proto, error) {
 			}, nil
 		}
 
-		var opponent int
-		switch p.Player {
-		case 1:
-			opponent = 2
-		case 2:
-			opponent = 1
-		}
 		return []tcp.Proto{
 			{
 				Action: DRAW_GAME_AWAIT,
 				Player: p.Player,
-				Body:   getGame(),
+				Body:   getGame(p.Player),
 			},
 			{
 				Action: DRAW_GAME_SHOOT,
 				Player: opponent,
-				Body:   getGame(),
+				Body:   getGame(p.Player),
 			},
 		}, nil
 	}
@@ -266,7 +330,7 @@ func DoGunShot(p tcp.Proto) ([]tcp.Proto, error) {
 	return []tcp.Proto{}, nil
 }
 
-func getGame() string {
+func getGame(playerId int) string {
 	res, err := json.Marshal(g)
 	if err != nil {
 		panic(err)

@@ -31,7 +31,6 @@ var (
 	clientOrServer string = "client"
 	host           string = "localhost"
 	port           string = "3333"
-	numShips       int    = 5
 )
 
 func main() {
@@ -48,9 +47,6 @@ func main() {
 
 	// Server port
 	flag.StringVar(&host, "host", host, "ip or host for our server")
-
-	// Number of ships
-	flag.IntVar(&numShips, "ships", numShips, "number of ships")
 
 	// Log level
 	var v, vv bool
@@ -80,7 +76,7 @@ func main() {
 
 	switch clientOrServer {
 	case RUNTYPE_SERVER:
-		server.Run(host, port, numShips)
+		server.Run(host, port)
 	case RUNTYPE_CLIENT:
 		client.Run(host, port)
 	}

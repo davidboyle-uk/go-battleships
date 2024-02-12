@@ -5,9 +5,9 @@ import (
 	"github.com/dbx123/go-battleships/tcp"
 )
 
-func Run(host, port string, numShips int) {
+func Run(host, port string) {
 	// Create game
-	core.SetGame(core.PrepareGame(core.CPU_GRID, numShips))
+	core.PrepareGame(core.CPU_GRID)
 
 	// Start tcp
 	tcp.Start(host, port, core.HandleRequest)

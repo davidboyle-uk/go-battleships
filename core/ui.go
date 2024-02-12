@@ -1,7 +1,7 @@
 package core
 
 import (
-	"github.com/dbx123/go-battleships/core/palette"
+	"github.com/dbx123/go-battleships/palette"
 )
 
 //nolint:dupword

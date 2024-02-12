@@ -24,14 +24,14 @@ func Random(min, max int) int {
 	return int(n.Int64()) + min
 }
 
-// a = 1.
+// a = 0.
 func RuneToInt(letter rune) int {
 	char := int(letter)
-	char -= 65 + 31
+	char -= 65 + 32
 	return char
 }
 
-// 1 = a.
+// 0 = a.
 func intToRune(number int) rune {
 	char := number + 65 + 32
 	return rune(char)
