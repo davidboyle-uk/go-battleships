@@ -330,10 +330,42 @@ func DoGunShot(p tcp.Proto) ([]tcp.Proto, error) {
 	return []tcp.Proto{}, nil
 }
 
-func getGame(playerId int) string {
-	res, err := json.Marshal(g)
+func getGame(playerID int) string {
+	p1 := *g.Game.Players[0]
+	p2 := *g.Game.Players[1]
+	gc := types.Game{
+		GameType: g.GameType,
+		Game: bb_types.Game{
+			Players: []*bb_types.Player{
+				&p1,
+				&p2,
+			},
+		},
+		LastMoves: g.LastMoves,
+	}
+
+	switch playerID {
+	case 1:
+		switch *g.GameType {
+		case types.ONE_PLAYER:
+			p1.Board.Moves = bb_types.Moves{}
+		case types.TWO_PLAYER:
+			p2.Board.Moves = bb_types.Moves{}
+		}
+	case 2:
+		switch *g.GameType {
+		case types.TWO_PLAYER:
+			p1.Board.Moves = bb_types.Moves{}
+		}
+	}
+
+	gc.Game.Players[0] = &p1
+	gc.Game.Players[1] = &p2
+
+	res, err := json.Marshal(gc)
 	if err != nil {
 		panic(err)
 	}
+
 	return string(res)
 }

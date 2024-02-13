@@ -18,8 +18,8 @@ var (
 	STR_SEA_OK       = "  "
 	STR_STATUS_ERROR = "??"
 
-	PRINT_CALLERSEA_MODE   = 2
-	PRINT_OPPONENTSEA_MODE = 1
+	PRINT_PLAYER_BOARD   = 2
+	PRINT_OPPONENT_BOARD = 1
 )
 
 var legend = map[int]string{
@@ -76,18 +76,20 @@ func (g *Game) PrettyPrintGame(currentPlayer int) string {
 	p1 := pOne.Name
 	p2 := pTwo.Name
 
+	dim := pOne.Board.Dim
+
 	var gs string
 	switch currentPlayer {
 	case 1:
 		gs += ">>> " + p1 + "'s Board <<<\n\n"
-		gs += PrettyPrintBoard(pOne.Board, pTwo.Moves, PRINT_CALLERSEA_MODE)
+		gs += PrettyPrintBoard(pOne.Board.Moves, pTwo.Moves, dim, PRINT_PLAYER_BOARD)
 		gs += "\n\n>>> " + p2 + "'s Board <<<\n\n"
-		gs += PrettyPrintBoard(pTwo.Board, pOne.Moves, PRINT_OPPONENTSEA_MODE)
+		gs += PrettyPrintBoard(bb_types.Moves{}, pOne.Moves, dim, PRINT_OPPONENT_BOARD)
 	case 2:
 		gs += ">>> " + p2 + "'s Board <<<\n\n"
-		gs += PrettyPrintBoard(pTwo.Board, pOne.Moves, PRINT_CALLERSEA_MODE)
+		gs += PrettyPrintBoard(pTwo.Board.Moves, pOne.Moves, dim, PRINT_PLAYER_BOARD)
 		gs += "\n\n>>> " + p1 + "'s Board <<<\n\n"
-		gs += PrettyPrintBoard(pOne.Board, pTwo.Moves, PRINT_OPPONENTSEA_MODE)
+		gs += PrettyPrintBoard(bb_types.Moves{}, pTwo.Moves, dim, PRINT_OPPONENT_BOARD)
 	}
 
 	gs += "\n"
@@ -107,26 +109,26 @@ func PrettyPrintCoord(c bb_types.Coord) string {
 	return "[" + util.IntToLetter(c.X) + strconv.Itoa(c.Y+1) + "]"
 }
 
-func PrettyPrintBoard(b bb_types.Board, pMoves bb_types.Moves, h int) string {
+func PrettyPrintBoard(myBoardMoves bb_types.Moves, playerMoves bb_types.Moves, dim, h int) string {
 	var s string
 
 	// create column indicator line
 	s = "   " + GAME_GRID_BORDER
-	for r := 0; r < b.Dim-1; r++ {
+	for r := 0; r < dim-1; r++ {
 		s += "-" + util.IntToLetter(r) + "--" + GAME_GRID_BORDER
 	}
-	s += "-" + util.IntToLetter(b.Dim-1) + "--" + GAME_GRID_BORDER + "\n"
+	s += "-" + util.IntToLetter(dim-1) + "--" + GAME_GRID_BORDER + "\n"
 
 	// create first separation line
 	s += "   " + GAME_GRID_BORDER
-	for r := 0; r < b.Dim-1; r++ {
+	for r := 0; r < dim-1; r++ {
 		s += "-----"
 	}
 	s += "----" + GAME_GRID_BORDER + "\n"
 
 	// for each col
 	var state string
-	for y := 0; y < b.Dim; y++ {
+	for y := 0; y < dim; y++ {
 		// start with legend
 		pad := "  "
 		if y >= 9 {
@@ -138,27 +140,27 @@ func PrettyPrintBoard(b bb_types.Board, pMoves bb_types.Moves, h int) string {
 		s += GAME_GRID_BORDER
 
 		// for each column
-		for x := 0; x < b.Dim; x++ {
+		for x := 0; x < dim; x++ {
 			t := bb_types.Coord{X: x, Y: y}.String()
 
 			state = STR_SEA_OK
 
-			// if we are drawing caller's Sea
+			// if we are drawing caller's Board
 			switch h {
-			case PRINT_CALLERSEA_MODE:
-				if move, ok := b.Moves[t]; ok {
+			case PRINT_PLAYER_BOARD:
+				if move, ok := myBoardMoves[t]; ok {
 					state = ConvertState(move.State)
 					if move.Ship != nil {
 						state = STR_SHIP_OK
 					}
 				}
-				if move, ok := pMoves[t]; ok {
+				if move, ok := playerMoves[t]; ok {
 					state = ConvertState(move.State)
 				}
 
-			// if we are drawing opponent's Sea
-			case PRINT_OPPONENTSEA_MODE:
-				if move, ok := pMoves[t]; ok {
+			// if we are drawing opponent's Board
+			case PRINT_OPPONENT_BOARD:
+				if move, ok := playerMoves[t]; ok {
 					state = ConvertState(move.State)
 				}
 			}
@@ -169,7 +171,7 @@ func PrettyPrintBoard(b bb_types.Board, pMoves bb_types.Moves, h int) string {
 		// create separation line
 		s += "\n" + "   " + GAME_GRID_BORDER
 		l := "" // legend text
-		for c := 0; c < b.Dim-1; c++ {
+		for c := 0; c < dim-1; c++ {
 			s += "-----"
 			if lt, ok := legend[y]; ok {
 				l = lt
