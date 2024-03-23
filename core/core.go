@@ -3,9 +3,9 @@ package core
 import (
 	"fmt"
 
-	"github.com/dbx123/battleships-board/pkg/game"
-	bb_types "github.com/dbx123/battleships-board/types"
-	"github.com/dbx123/go-battleships/types"
+	"github.com/davidboyle-uk/battleships-board/pkg/game"
+	bb_types "github.com/davidboyle-uk/battleships-board/types"
+	"github.com/davidboyle-uk/go-battleships/types"
 	"github.com/rockwell-uk/go-logger/logger"
 )
 

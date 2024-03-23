@@ -1,13 +1,5 @@
-github.com/dbx123/battleships-board v1.0.1 h1:8sJQghgFd/NyEhXVWnYtYud7NGVvfEhEN0+WX7Yi4ZU=
-github.com/dbx123/battleships-board v1.0.1/go.mod h1:OeoAHDZ+E8yIYn4zkLW0N3qo+irhq1ef9/8XJDSK/HE=
-github.com/dbx123/battleships-board v1.0.2-0.20240212123114-2e9d7cebc87f h1:Pw3yw6q36tEV/f/9hQBZkdMnOQ+u7nuWnWF+gCoBCGM=
-github.com/dbx123/battleships-board v1.0.2-0.20240212123114-2e9d7cebc87f/go.mod h1:OeoAHDZ+E8yIYn4zkLW0N3qo+irhq1ef9/8XJDSK/HE=
-github.com/dbx123/battleships-board v1.0.2-0.20240212145846-b6cda285f2e6 h1:jI3E9NOfUsE799fuPU923axQJcanDZZJ9CASzVZ0PAE=
-github.com/dbx123/battleships-board v1.0.2-0.20240212145846-b6cda285f2e6/go.mod h1:OeoAHDZ+E8yIYn4zkLW0N3qo+irhq1ef9/8XJDSK/HE=
-github.com/dbx123/battleships-board v1.0.2-0.20240212162753-673137b47c7b h1:/+o3lIFvMsc7QPhL7b6DLJxgvbmCaLdTF1A8J+YkIXI=
-github.com/dbx123/battleships-board v1.0.2-0.20240212162753-673137b47c7b/go.mod h1:OeoAHDZ+E8yIYn4zkLW0N3qo+irhq1ef9/8XJDSK/HE=
-github.com/dbx123/battleships-board v1.1.0 h1:0wIbGS/H41cpURwct+2mJJTsefjdzYL3Oa9qEZ9OorA=
-github.com/dbx123/battleships-board v1.1.0/go.mod h1:OeoAHDZ+E8yIYn4zkLW0N3qo+irhq1ef9/8XJDSK/HE=
+github.com/davidboyle-uk/battleships-board v1.2.0 h1:LU4RB5wiXjl+SpTeHY5UwzOT26t9Y/xVkOePIy+4/Xw=
+github.com/davidboyle-uk/battleships-board v1.2.0/go.mod h1:dgHwax+q/3u1BF8+FAN4oY4+g5oTTJUJQ+ZzNnRX2lk=
 github.com/fatih/color v1.16.0 h1:zmkK9Ngbjj+K0yRhTVONQh1p/HknKYSlNT+vZCzyokM=
 github.com/fatih/color v1.16.0/go.mod h1:fL2Sau1YI5c0pdGEVCbKQbLXB6edEj1ZgiY4NijnWvE=
 github.com/mattn/go-colorable v0.1.13 h1:fFA4WZxdEF4tXPZVKMLwD8oUnCTTo08duU7wxecdEvA=

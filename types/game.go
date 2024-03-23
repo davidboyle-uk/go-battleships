@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 	"strconv"
 
-	bb_types "github.com/dbx123/battleships-board/types"
-	"github.com/dbx123/go-battleships/palette"
-	"github.com/dbx123/go-battleships/util"
+	bb_types "github.com/davidboyle-uk/battleships-board/types"
+	"github.com/davidboyle-uk/go-battleships/palette"
+	"github.com/davidboyle-uk/go-battleships/util"
 )
 
 var (

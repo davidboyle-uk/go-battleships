@@ -5,9 +5,9 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/dbx123/go-battleships/core"
-	"github.com/dbx123/go-battleships/tcp"
-	"github.com/dbx123/go-battleships/util"
+	"github.com/davidboyle-uk/go-battleships/core"
+	"github.com/davidboyle-uk/go-battleships/tcp"
+	"github.com/davidboyle-uk/go-battleships/util"
 )
 
 func handleRequest(p tcp.Proto) tcp.Proto {

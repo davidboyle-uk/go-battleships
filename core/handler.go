@@ -7,7 +7,7 @@ import (
 	"os"
 	"sync"
 
-	"github.com/dbx123/go-battleships/tcp"
+	"github.com/davidboyle-uk/go-battleships/tcp"
 
 	"github.com/rockwell-uk/go-logger/logger"
 )

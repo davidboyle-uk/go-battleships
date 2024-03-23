@@ -1,8 +1,8 @@
 package server
 
 import (
-	"github.com/dbx123/go-battleships/core"
-	"github.com/dbx123/go-battleships/tcp"
+	"github.com/davidboyle-uk/go-battleships/core"
+	"github.com/davidboyle-uk/go-battleships/tcp"
 )
 
 func Run(host, port string) {

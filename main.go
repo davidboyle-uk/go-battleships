@@ -3,9 +3,9 @@ package main
 import (
 	"flag"
 
-	"github.com/dbx123/go-battleships/client"
-	"github.com/dbx123/go-battleships/server"
-	"github.com/dbx123/go-battleships/util"
+	"github.com/davidboyle-uk/go-battleships/client"
+	"github.com/davidboyle-uk/go-battleships/server"
+	"github.com/davidboyle-uk/go-battleships/util"
 
 	"github.com/rockwell-uk/go-logger/logger"
 )

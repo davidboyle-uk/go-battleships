@@ -13,11 +13,11 @@ import (
 	"strings"
 	"sync"
 
-	bb_types "github.com/dbx123/battleships-board/types"
-	"github.com/dbx123/go-battleships/core"
-	"github.com/dbx123/go-battleships/tcp"
-	"github.com/dbx123/go-battleships/types"
-	"github.com/dbx123/go-battleships/util"
+	bb_types "github.com/davidboyle-uk/battleships-board/types"
+	"github.com/davidboyle-uk/go-battleships/core"
+	"github.com/davidboyle-uk/go-battleships/tcp"
+	"github.com/davidboyle-uk/go-battleships/types"
+	"github.com/davidboyle-uk/go-battleships/util"
 )
 
 var (
